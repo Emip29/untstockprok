@@ -7,20 +7,12 @@ import plotly.graph_objects as go
 from alpha_vantage.fundamentaldata import FundamentalData
 from stocknews import StockNews
 
-
-# ---------------------------------------------------------
-# STREAMLIT UI
-# ---------------------------------------------------------
 st.title("Stock Dashboard")
 
 ticker = st.sidebar.text_input("Ticker", value="AAPL")
 start_date = st.sidebar.date_input("Start Date")
 end_date = st.sidebar.date_input("End Date")
 
-
-# ---------------------------------------------------------
-# DOWNLOAD PRICE DATA
-# ---------------------------------------------------------
 try:
     data = yf.download(ticker, start=start_date, end=end_date)
 
@@ -28,27 +20,15 @@ except Exception as e:
     st.error(f"Error downloading data: {e}")
     st.stop()
 
-# If no data, stop
 if data.empty:
     st.error("No price data returned. Try another ticker or date range.")
     st.stop()
 
-
-# ---------------------------------------------------------
-# FIX MULTIINDEX COLUMNS
-# ---------------------------------------------------------
 if isinstance(data.columns, pd.MultiIndex):
     data.columns = ["_".join([str(c) for c in col if c]) for col in data.columns]
 
-# Now data has flat columns
-
-
-# ---------------------------------------------------------
-# DETECT PRICE COLUMN
-# ---------------------------------------------------------
 possible_cols = ["Adj Close", "AdjClose", "Close"]
 
-# also allow flattened versions like Close_AAPL
 flat_matches = [c for c in data.columns if any(pc in c for pc in possible_cols)]
 
 if flat_matches:
@@ -60,11 +40,8 @@ else:
     st.write(list(data.columns))
     st.stop()
 
-
-# Extract price series safely (1D)
 price_series = data[price_col]
 
-# If it's a DataFrame (2D), pick first numeric column
 if isinstance(price_series, pd.DataFrame):
     num_cols = price_series.select_dtypes(include="number").columns
     if len(num_cols) == 0:
@@ -73,13 +50,7 @@ if isinstance(price_series, pd.DataFrame):
         st.stop()
     price_series = price_series[num_cols[0]]
 
-# Ensure numeric
 price_series = pd.to_numeric(price_series, errors="coerce")
-
-
-# ---------------------------------------------------------
-# PRICE CHART (graph_objects)
-# ---------------------------------------------------------
 fig = go.Figure()
 fig.add_trace(go.Scatter(
     x=data.index,
@@ -95,18 +66,10 @@ fig.update_layout(
 
 st.plotly_chart(fig)
 
-
-# ---------------------------------------------------------
-# TABS
-# ---------------------------------------------------------
 pricing_tab, fundamental_tab, news_tab = st.tabs(
     ["Pricing Data", "Fundamental Data", "Top 10 News"]
 )
 
-
-# ---------------------------------------------------------
-# PRICING TAB
-# ---------------------------------------------------------
 with pricing_tab:
     st.header("Price Movements")
 
@@ -124,31 +87,22 @@ with pricing_tab:
     st.write(f"Standard Deviation: {stdev * 100:.2f}%")
 
 
-# ---------------------------------------------------------
-# FUNDAMENTAL DATA TAB
-# ---------------------------------------------------------
 with fundamental_tab:
     st.header("Fundamental Data")
 
     try:
         key = "XCWQ3FD4VCKVL1NA"
         fd = FundamentalData(key, output_format="pandas")
-
-        # Balance Sheet
         st.subheader("Balance Sheet (Annual)")
         bs = fd.get_balance_sheet_annual(ticker)[0]
         bs = bs.T[2:]
         bs.columns = list(fd.get_balance_sheet_annual(ticker)[0].T.iloc[0])
         st.write(bs)
-
-        # Income Statement
         st.subheader("Income Statement (Annual)")
         inc = fd.get_income_statement_annual(ticker)[0]
         inc2 = inc.T[2:]
         inc2.columns = list(inc.T.iloc[0])
         st.write(inc2)
-
-        # Cash Flow
         st.subheader("Cash Flow Statement (Annual)")
         cf = fd.get_cash_flow_annual(ticker)[0]
         cf2 = cf.T[2:]
@@ -159,9 +113,6 @@ with fundamental_tab:
         st.error(f"Error loading fundamental data: {e}")
 
 
-# ---------------------------------------------------------
-# NEWS TAB
-# ---------------------------------------------------------
 with news_tab:
     st.header(f"Latest News for {ticker}")
 
