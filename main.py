@@ -91,7 +91,7 @@ with fundamental_tab:
     st.header("Fundamental Data")
 
     try:
-        key = "XCWQ3FD4VCKVL1NA"
+        key = "G8MVGNKCB35F0RKF"
         fd = FundamentalData(key, output_format="pandas")
         st.subheader("Balance Sheet (Annual)")
         bs = fd.get_balance_sheet_annual(ticker)[0]
