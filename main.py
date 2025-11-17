@@ -25,7 +25,7 @@ with pricing_data:
 
 from alpha_vantage.fundamentaldata import FundamentalData
 with fundamental_data:
-    key = ''
+    key = 'XCWQ3FD4VCKVL1NA'
     fd = FundamentalData(key,output_format = 'pandas')
     st.subheader('Balance Sheet')
     balance_sheet = fd.get_balance_sheet_annual(ticker)[0]
